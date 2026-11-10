@@ -5,6 +5,11 @@ resources:
       schedule:
         quartz_cron_expression: "0 0 7 * * ?"
         timezone_id: America/Chicago
+      email_notifications:
+        on_success:
+          - anthony@builtbyanthony.dev
+        on_failure:
+          - anthony@builtbyanthony.dev 
       environments:
         - environment_key: default
           spec:
@@ -20,7 +25,7 @@ resources:
             parameters:
               - --catalog=${var.catalog}
               - --schema=${resources.schemas.bronze.name}
-              
+
         - task_key: ingest_fred
           depends_on:
             - task_key: create_tables
