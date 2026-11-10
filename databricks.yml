@@ -10,3 +10,16 @@ targets:
     default: true
     workspace:
       host: https://dbc-21474648-f078.cloud.databricks.com
+
+artifacts:
+  economic-intelligence:
+    type: whl
+    path: . 
+    build: pip wheel . --no-deps -w dist
+    dynamic_version: true
+    files:
+      - source: dist/*.whl
+
+variables:
+  catalog:
+    default: economic_intelligence
