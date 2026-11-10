@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS economic_intelligence.dev_anthony_bronze.raw_api_responses (
+CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || :schema || '.raw_api_responses') (
   ingestion_run_id  STRING    NOT NULL COMMENT 'Groups all calls from one pipeline run',
   source            STRING    NOT NULL COMMENT 'Source system, e.g. fred',
   endpoint          STRING    NOT NULL COMMENT 'API path, e.g. series/observations',
