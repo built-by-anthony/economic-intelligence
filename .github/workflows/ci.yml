@@ -18,3 +18,12 @@ jobs:
                 python-version: "3.12"
             - run: pip install -e . pytest
             - run: pytest -v
+    validate:
+        runs-on: ubuntu-latest 
+        env:
+            DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
+            DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: databricks/setup-cli@v1.25.0
+            - run: databricks bundle validate
