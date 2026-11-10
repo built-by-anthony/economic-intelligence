@@ -12,7 +12,18 @@ resources:
             dependencies:
               - ../dist/*.whl
       tasks:
+        - task_key: create_tables
+          environment_key: default
+          python_wheel_task:
+            package_name: economic_intelligence
+            entry_point: create_tables
+            parameters:
+              - --catalog=${var.catalog}
+              - --schema=${resources.schemas.bronze.name}
+              
         - task_key: ingest_fred
+          depends_on:
+            - task_key: create_tables
           environment_key: default
           python_wheel_task:
             package_name: economic_intelligence
