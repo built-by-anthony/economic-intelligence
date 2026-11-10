@@ -17,6 +17,6 @@ def append_raw_response(spark, table: str, responses: list[RawResponse], run_id:
         row = asdict(r)
         row["ingestion_run_id"] = run_id
         rows.append(row)
-        df = spark.createDataFrame(rows, schema=spark.table(table).schema)
-        df.write.mode("append").saveAsTable(table)
-        return len(rows)
+    df = spark.createDataFrame(rows, schema=spark.table(table).schema)
+    df.write.mode("append").saveAsTable(table)
+    return len(rows)
