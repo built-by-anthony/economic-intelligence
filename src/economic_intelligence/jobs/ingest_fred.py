@@ -5,14 +5,7 @@ from databricks.sdk import WorkspaceClient
 
 from economic_intelligence.bronze import append_raw_response
 from economic_intelligence.sources.fred import fetch_series_observations
-
-def get_spark():
-    try:
-        from databricks.connect import DatabricksSession
-        return DatabricksSession.builder.getOrCreate()
-    except ImportError:
-        from pyspark.sql import SparkSession
-        return SparkSession.builder.getOrCreate()
+from economic_intelligence.spark import get_spark
 
 def main(argv=None):
     parser = argparse.ArgumentParser()

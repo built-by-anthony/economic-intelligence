@@ -10,7 +10,7 @@ Economic Intelligence Lakehouse: a learning project for Databricks (Free Edition
 
 ## Databricks layout
 
-- Workspace: Free Edition, `https://dbc-21474648-f078.cloud.databricks.com`, CLI profile `DEFAULT` (OAuth).
+- Workspace: Free Edition, `https://dbc-21474648-f078.cloud.databricks.com`, CLI profile `dbc-21474648-f078` (OAuth; the default via `[__settings__] default_profile` in `~/.databrickscfg`).
 - Catalog `economic_intelligence` was created once by hand in SQL and is deliberately **not** managed by the bundle, so `bundle destroy` can't remove it.
 - The bundle (`databricks.yml` + `resources/*.yml`) manages the `bronze`/`silver`/`gold` schemas. The `dev` target uses `mode: development`, which prefixes names: deployed schemas are `economic_intelligence.dev_anthony_{bronze,silver,gold}`. A future `prod` target gets unprefixed names. Code must therefore take catalog/schema as parameters (bundle variables / job parameters), never hardcode them.
 - Commands: `databricks bundle validate`, `databricks bundle summary` (shows resolved names), `databricks bundle deploy`, `databricks bundle run fred_ingestion`.
@@ -20,11 +20,13 @@ Economic Intelligence Lakehouse: a learning project for Databricks (Free Edition
 ## Code layout and execution
 
 - Installable package under `src/economic_intelligence/` (`pip install -e .`). Source modules (`sources/fred.py`) return `RawResponse` objects and never touch Spark; `bronze.py` writes them to `<catalog>.<schema>.raw_api_responses` in one append commit per run. New sources add a module under `sources/` without changing the writer.
-- Entry point `ingest_fred` (`[project.scripts]` in `pyproject.toml`) takes `--catalog --schema --series ...`. `get_spark()` uses Databricks Connect locally and the built-in session in jobs.
+- Entry points (`[project.scripts]` in `pyproject.toml`): `create_tables --catalog --schema` and `ingest_fred --catalog --schema --series ...`. Both get Spark from `economic_intelligence.spark.get_spark()`, which uses Databricks Connect locally and the built-in session in jobs.
+- Table DDL lives in the package under `src/economic_intelligence/sql/<layer>/` and ships in the wheel via `[tool.setuptools.package-data]`. Statements are `CREATE TABLE IF NOT EXISTS IDENTIFIER(:catalog || '.' || :schema || '.<table>')` and are bound with `spark.sql(stmt, args={...})`, so the same file works for dev and prod schemas. `create_tables` loads them with `importlib.resources` and applies the files listed in `DDL_FILES`; a new table means a new `.sql` file plus an entry there. It is idempotent.
 - Local runs go to serverless through Databricks Connect (profile `dbc-21474648-f078` has `serverless_compute_id = auto`): `python -m economic_intelligence.jobs.ingest_fred --catalog economic_intelligence --schema dev_anthony_bronze`. The VS Code Databricks extension works on Free Edition serverless.
-- The bundle `artifacts` section builds the wheel (`dynamic_version: true` so serverless doesn't reuse a cached `0.1.0`); `resources/fred_ingestion.job.yml` runs it as a `python_wheel_task` on serverless environment version 4.
+- The bundle `artifacts` section builds the wheel (`dynamic_version: true` so serverless doesn't reuse a cached `0.1.0`); `resources/fred_ingestion.job.yml` runs it as two `python_wheel_task`s on serverless environment version 4, sharing one environment: `create_tables` → `ingest_fred` (`depends_on`), so a fresh target creates its own tables. The wheel's `package-data` must include the `.sql` files: the editable install reads `src/` directly, so a missing file only fails on serverless (check with `unzip -l` on the built wheel).
 - Every subpackage needs an `__init__.py`: setuptools `packages.find` silently drops folders without one, so the wheel would miss modules that still import fine locally.
 - Free Edition: public DBFS root is disabled (`dbutils.fs.ls("/")` fails); use Unity Catalog volumes for files. Local `WorkspaceClient().dbutils` only supports `fs` and `secrets`; anything else (including a typo) fails with a misleading `cluster_id is required`.
+- CI (`.github/workflows/ci.yml`): `test` runs pytest without Databricks credentials; `validate` runs `databricks bundle validate` as the workspace service principal `economic-intelligence-ci` via OAuth M2M (repo variable `DATABRICKS_CLIENT_ID`, repo secret `DATABRICKS_CLIENT_SECRET`, which expires and must be rotated). GitHub OIDC federation isn't available because Free Edition has no account console. `validate` needs workspace auth even though it deploys nothing.
 - Tests: `pytest -v`; single test: `pytest tests/test_fred.py::test_api_key_is_sent_but_not_stored`. Tests stub the HTTP session and never hit the network.
 
 ## How the user wants to work

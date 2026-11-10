@@ -6,6 +6,7 @@ dependencies = ["requests"]
 
 [project.scripts]
 ingest_fred = "economic_intelligence.jobs.ingest_fred:main"
+create_tables = "economic_intelligence.jobs.create_tables:main"
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -16,3 +17,6 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.setuptools.package-data]
+economic_intelligence = ["sql/**/*.sql"]
