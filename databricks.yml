@@ -1,0 +1,12 @@
+bundle:
+  name: economic-intelligence
+
+include:
+  - resources/*.yml
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://dbc-21474648-f078.cloud.databricks.com

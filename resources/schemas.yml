@@ -1,0 +1,16 @@
+resources:
+  schemas:
+    bronze:
+      catalog_name: economic_intelligence
+      name: bronze
+      comment: Raw source payloads, append-only
+
+    silver: 
+      catalog_name: economic_intelligence
+      name: silver
+      comment: Standardized, validated observations
+
+    gold: 
+      catalog_name: economic_intelligence
+      name: gold 
+      comment: Curated analytical products 
